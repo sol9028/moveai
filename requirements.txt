@@ -1,2 +1,7 @@
-numpy>=1.26
-scipy>=1.11
+pandas
+numpy
+lightgbm
+scikit-learn
+holidays
+matplotlib
+joblib
