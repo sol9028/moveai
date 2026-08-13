@@ -8,6 +8,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -r main/optimization/requirements.txt
-      - run: python main/optimization/generate_demo_forecasts.py --start-date 2026-08-17
-      - run: python main/optimization/run.py --start-date 2026-08-17
+      - run: pip install -r optimization/requirements.txt
+      - run: python optimization/generate_demo_forecasts.py --start-date 2026-08-17
+      - run: python optimization/run.py --start-date 2026-08-17
