@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RE:E-TRAIN LOOP — Glass Control Tower</title>
+<style>
+:root{
+  --bg:#05080c;
+  --text:#f6fbfa;
+  --muted:#91a3a0;
+  --muted2:#5d6c69;
+  --mint:#7cf8d0;
+  --mint2:#24d59d;
+  --mint-soft:rgba(124,248,208,.12);
+  --amber:#ffbe68;
+  --amber2:#ec8f42;
+  --amber-soft:rgba(255,190,104,.12);
+  --blue:#90c9ff;
+  --red:#ff7878;
+  --line:rgba(255,255,255,.105);
+  --line2:rgba(255,255,255,.18);
+  --deep:rgba(7,14,19,.70);
+  --glass:rgba(21,35,42,.47);
+  --glass2:rgba(17,29,35,.64);
+  --shadow:0 28px 80px rgba(0,0,0,.35);
+  --shadow2:0 12px 38px rgba(0,0,0,.24);
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;min-height:100%;background:var(--bg);color:var(--text);
+  font-family:"Pretendard Variable","Pretendard","Noto Sans KR","Apple SD Gothic Neo","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:-.017em;
+}
+body{
+  overflow-x:hidden;
+  background:
+    radial-gradient(800px 520px at 12% -5%,rgba(47,201,151,.16),transparent 62%),
+    radial-gradient(760px 540px at 98% 4%,rgba(87,133,211,.14),transparent 61%),
+    radial-gradient(850px 620px at 68% 100%,rgba(246,154,75,.08),transparent 63%),
+    linear-gradient(145deg,#030609,#071019 45%,#0b1419);
+}
+.bg-orb{position:fixed;border-radius:50%;filter:blur(8px);pointer-events:none;z-index:0;opacity:.65}
+.orb1{width:300px;height:300px;left:-120px;top:170px;background:radial-gradient(circle at 60% 45%,rgba(79,236,188,.24),rgba(79,236,188,.03) 56%,transparent 72%)}
+.orb2{width:420px;height:420px;right:-200px;top:230px;background:radial-gradient(circle at 35% 50%,rgba(102,157,233,.20),rgba(102,157,233,.03) 56%,transparent 72%)}
+.orb3{width:360px;height:360px;left:38%;bottom:-240px;background:radial-gradient(circle at 50% 35%,rgba(255,181,92,.12),transparent 68%)}
+.grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.55;background:
+ linear-gradient(rgba(255,255,255,.013) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(255,255,255,.013) 1px,transparent 1px);
+ background-size:46px 46px;mask-image:linear-gradient(#000 0%,rgba(0,0,0,.65) 62%,transparent 92%)}
+.app{position:relative;z-index:1;max-width:1500px;margin:auto;padding:18px 24px 42px}
+button,input,select,textarea{font:inherit}
+button{color:inherit}
+
+/* depth system */
+.glass-primary{
+  background:
+   radial-gradient(620px 270px at 80% 4%,rgba(124,248,208,.15),transparent 58%),
+   linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.025) 42%,rgba(255,255,255,.045)),
+   rgba(9,19,24,.56);
+  border:1px solid rgba(255,255,255,.155);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.15),
+    inset 0 -1px 0 rgba(255,255,255,.025),
+    0 32px 90px rgba(0,0,0,.40),
+    0 0 0 1px rgba(124,248,208,.02);
+  backdrop-filter:blur(34px) saturate(155%);
+  -webkit-backdrop-filter:blur(34px) saturate(155%);
+}
+.glass-secondary{
+  background:
+   linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018)),
+   rgba(12,22,28,.52);
+  border:1px solid rgba(255,255,255,.105);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.075),0 18px 52px rgba(0,0,0,.27);
+  backdrop-filter:blur(24px) saturate(135%);
+  -webkit-backdrop-filter:blur(24px) saturate(135%);
+}
+.glass-tertiary{
+  background:rgba(255,255,255,.022);
+  border:1px solid rgba(255,255,255,.065);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+.specular{position:relative;overflow:hidden}
+.specular:before{
+  content:"";position:absolute;z-index:0;pointer-events:none;left:6%;right:6%;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.36),rgba(124,248,208,.18),transparent);
+}
+.specular:after{
+  content:"";position:absolute;z-index:0;pointer-events:none;width:250px;height:100px;left:-60px;top:-65px;
+  background:radial-gradient(ellipse,rgba(255,255,255,.08),transparent 67%);transform:rotate(-12deg)
+}
+.specular>*{position:relative;z-index:1}
+
+.topbar{height:70px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.055);margin-bottom:21px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{
+  width:40px;height:40px;border-radius:14px;border:1px solid rgba(124,248,208,.24);
+  background:linear-gradient(145deg,rgba(124,248,208,.16),rgba(255,255,255,.025));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 10px 32px rgba(36,213,157,.09);
+  position:relative;overflow:hidden;backdrop-filter:blur(20px)
+}
+.logo:before,.logo:after{content:"";position:absolute;height:2px;border-radius:99px;left:8px;right:8px}
+.logo:before{top:12px;background:var(--mint);box-shadow:0 12px 0 var(--amber),0 0 15px rgba(124,248,208,.34)}
+.logo:after{top:18px;left:14px;right:5px;background:rgba(124,248,208,.42)}
+.brand-title{font-size:15px;font-weight:800;letter-spacing:.045em}.brand-sub{font-size:9.5px;color:var(--muted);margin-top:3px}
+.actions{display:flex;align-items:center;gap:8px}
+.live-pill,.data-pill{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:rgba(255,255,255,.035);backdrop-filter:blur(18px);padding:8px 10px;border-radius:999px;font-size:8px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 14px rgba(124,248,208,.72)}
+.data-pill{color:var(--amber);border-color:rgba(255,190,104,.16);background:rgba(255,190,104,.07)}
+.clock{font-size:8.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.btn{
+  cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.04);
+  border-radius:11px;padding:9px 11px;font-size:8.5px;box-shadow:inset 0 1px 0 rgba(255,255,255,.045);transition:.2s
+}
+.btn:hover{transform:translateY(-1px);border-color:var(--line2);background:rgba(255,255,255,.06)}
+.btn.primary{border-color:rgba(124,248,208,.27);background:linear-gradient(145deg,rgba(124,248,208,.16),rgba(124,248,208,.065));color:var(--mint);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 9px 24px rgba(33,183,136,.09)}
+.btn.final{border-color:rgba(255,190,104,.28);background:linear-gradient(145deg,rgba(255,190,104,.18),rgba(255,190,104,.065));color:var(--amber);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 9px 24px rgba(225,137,57,.10)}
+
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:15px;margin-bottom:16px}
+.pagehead h1{margin:0;font-size:25px;font-weight:780;letter-spacing:-.04em}.pagehead p{font-size:10px;color:var(--muted);margin:6px 0 0}
+.auto{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:8px}
+.switch{width:38px;height:21px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.035);position:relative;cursor:pointer}
+.switch i{position:absolute;width:15px;height:15px;border-radius:50%;left:2px;top:2px;background:#74827f;transition:.24s}
+.switch.on{border-color:rgba(124,248,208,.24);background:rgba(124,248,208,.10)}.switch.on i{left:18px;background:var(--mint);box-shadow:0 0 12px rgba(124,248,208,.4)}
+
+.status-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);border-radius:18px;margin-bottom:13px;overflow:hidden;
+}
+.status-cell{padding:14px 16px;min-height:91px;position:relative}
+.status-cell:not(:last-child){border-right:1px solid rgba(255,255,255,.07)}
+.status-label{font-size:8px;color:#a5b4b1;display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--mint);box-shadow:0 0 9px rgba(124,248,208,.36)}
+.dot.blue{background:var(--blue);box-shadow:0 0 9px rgba(144,201,255,.27)}.dot.amber{background:var(--amber);box-shadow:0 0 9px rgba(255,190,104,.3)}
+.status-value{font-size:26px;font-weight:790;letter-spacing:-.05em;margin-top:8px}.unit{font-size:9.5px;color:var(--muted);margin-left:4px;font-weight:600}
+.status-meta{font-size:8px;color:var(--muted);margin-top:3px}
+.mini-track{height:3px;background:rgba(255,255,255,.055);border-radius:99px;margin-top:9px;overflow:hidden}.mini-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mint2),var(--mint));box-shadow:0 0 9px rgba(124,248,208,.28)}.mini-track.blue i{background:linear-gradient(90deg,#5b97d7,var(--blue))}.mini-track.amber i{background:linear-gradient(90deg,var(--amber2),var(--amber))}
+
+.layout{display:grid;grid-template-columns:minmax(0,1.78fr) minmax(300px,.67fr);gap:13px}.left,.right{display:flex;flex-direction:column;gap:13px}
+.card{border-radius:20px}.pad{padding:18px}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.title{font-size:10px;font-weight:760;letter-spacing:.045em}.meta{font-size:8px;color:var(--muted)}
+.badge{font-size:7px;padding:5px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:rgba(255,255,255,.025);letter-spacing:.09em}
+
+/* focal panel */
+.hero{padding:21px 21px 19px;border-radius:24px;min-height:254px}
+.hero::before{left:8%;right:8%}
+.heroGlow{position:absolute;right:-80px;top:-100px;width:330px;height:330px;border-radius:50%;background:radial-gradient(circle,rgba(124,248,208,.13),rgba(124,248,208,.025) 48%,transparent 70%);filter:blur(1px);pointer-events:none}
+.heroAccent{position:absolute;left:0;top:25px;bottom:25px;width:3px;border-radius:0 99px 99px 0;background:linear-gradient(var(--mint),rgba(124,248,208,.1));box-shadow:0 0 22px rgba(124,248,208,.42)}
+.hero-headline{display:flex;align-items:center;gap:9px;margin-bottom:17px}.eyebrow{font-size:8px;color:var(--mint);letter-spacing:.12em}.decision-badge{font-size:7px;color:var(--mint);border:1px solid rgba(124,248,208,.19);background:rgba(124,248,208,.075);padding:5px 7px;border-radius:999px}
+.hero-grid{display:grid;grid-template-columns:1.2fr .84fr;gap:25px;align-items:end}
+.route{display:flex;align-items:center;gap:14px}.route-time{font-size:36px;font-weight:810;letter-spacing:-.06em}.station{font-size:18px;font-weight:760}.arrow{flex:1;color:var(--mint);font-size:7px;text-align:center;letter-spacing:.11em}.arrowline{height:1px;margin-top:8px;background:linear-gradient(90deg,var(--mint),rgba(124,248,208,.08));box-shadow:0 0 12px rgba(124,248,208,.3);position:relative}.arrowline:after{content:"";position:absolute;right:0;top:-3px;border-left:6px solid var(--mint);border-top:3.5px solid transparent;border-bottom:3.5px solid transparent}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:19px}.chip{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);font-size:9px;color:#cdd8d5}.chip b{font-size:11px;margin-left:4px}.chip.energy{background:rgba(124,248,208,.065);border-color:rgba(124,248,208,.16)}.chip.energy b{color:var(--mint)}.chip.circular{background:rgba(255,190,104,.065);border-color:rgba(255,190,104,.16)}.chip.circular b{color:var(--amber)}
+.note{font-size:10px;color:#becac7;line-height:1.67;margin-top:14px;max-width:650px}
+.hero-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hero-metric{padding:12px;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}.hero-metric small{display:block;font-size:7.5px;color:var(--muted);margin-bottom:6px}.hero-metric strong{font-size:16px}.hero-metric.key{background:linear-gradient(145deg,rgba(124,248,208,.12),rgba(124,248,208,.04));border-color:rgba(124,248,208,.18)}.hero-metric.key strong{color:var(--mint);text-shadow:0 0 16px rgba(124,248,208,.16)}
+.why{width:100%;margin-top:10px;cursor:pointer;padding:9px;border-radius:10px;border:1px solid rgba(124,248,208,.22);background:rgba(124,248,208,.09);color:var(--mint);font-size:8.5px;font-weight:760}
+
+/* AI right focal but secondary */
+.ai-panel{padding:18px;border-radius:20px;background:
+ radial-gradient(250px 160px at 20% 0%,rgba(124,248,208,.09),transparent 68%),
+ linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.015)),rgba(9,18,23,.59)}
+.ai-state{display:flex;align-items:center;gap:11px;margin:3px 0 14px}.ring{width:45px;height:45px;border-radius:50%;border:2px solid rgba(255,255,255,.07);border-top-color:var(--mint);border-right-color:rgba(124,248,208,.4);display:grid;place-items:center;animation:spin 2.2s linear infinite;box-shadow:0 0 20px rgba(124,248,208,.075)}.ring span{font-size:7px;color:var(--mint);animation:spin 2.2s linear infinite reverse}@keyframes spin{to{transform:rotate(360deg)}}.ai-title{font-size:11px;font-weight:730}.ai-sub{font-size:8px;color:var(--muted);margin-top:3px;line-height:1.45}.checks{display:grid;grid-template-columns:1fr 1fr;gap:5px}.check{padding:6px 0;border-bottom:1px solid rgba(255,255,255,.045);font-size:8px;color:#a9b7b4;display:flex;justify-content:space-between}.check b{color:var(--mint)}
+.ai-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px}.scenario strong{font-size:24px;display:block}.scenario small{font-size:7px;color:var(--muted)}.cycle{font-size:7.5px;color:var(--muted);text-align:right}
+
+/* network */
+.network-card{padding:16px 17px 18px}.network{height:225px;border-radius:15px;border:1px solid rgba(255,255,255,.065);position:relative;overflow:hidden;background:
+ radial-gradient(320px 150px at 15% 50%,rgba(124,248,208,.045),transparent 70%),
+ radial-gradient(320px 150px at 85% 50%,rgba(144,201,255,.04),transparent 70%),
+ linear-gradient(rgba(255,255,255,.017) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.017) 1px,transparent 1px),rgba(3,9,13,.29);background-size:auto,auto,28px 28px,28px 28px,auto}
+.zone{position:absolute;top:12px;color:var(--muted);font-size:7px;letter-spacing:.13em}.zl{left:15px}.zr{right:15px}.rail{position:absolute;left:20%;right:20%;top:50%;height:2px;background:linear-gradient(90deg,rgba(124,248,208,.7),rgba(121,145,140,.38),rgba(144,201,255,.58))}.rail:after{content:"";position:absolute;inset:-7px 0 auto;height:16px;background:repeating-linear-gradient(90deg,transparent 0 18px,rgba(255,255,255,.055) 18px 19px)}
+.node{position:absolute;width:120px;padding:8px 9px;border:1px solid rgba(255,255,255,.09);border-radius:11px;background:rgba(8,17,22,.54);backdrop-filter:blur(14px);z-index:4;box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 8px 24px rgba(0,0,0,.14)}.node .n{font-size:9px;font-weight:730}.node .s{font-size:8px;color:var(--muted);margin-top:3px}.sup .s b{color:var(--mint)}.dem .s b{color:var(--blue)}
+.n1{left:2%;top:35px}.n2{left:2%;top:90px}.n3{left:2%;top:145px}.n4{right:2%;top:63px}.n5{right:2%;top:137px}.branch{position:absolute;height:1px;background:rgba(137,159,155,.22)}.b1{left:15%;width:18%;top:63px;transform:rotate(18deg);transform-origin:left}.b2{left:15%;width:18%;top:115px}.b3{left:15%;width:18%;top:169px;transform:rotate(-18deg);transform-origin:left}.b4{right:15%;width:18%;top:91px;transform:rotate(-14deg);transform-origin:right}.b5{right:15%;width:18%;top:162px;transform:rotate(14deg);transform-origin:right}
+.train{position:absolute;left:47%;top:98px;display:flex;align-items:center;gap:4px;z-index:7;transition:left 1s;filter:drop-shadow(0 0 8px rgba(124,248,208,.16))}.engine{width:40px;height:18px;border-radius:6px;background:linear-gradient(90deg,var(--mint2),var(--mint));box-shadow:inset 0 1px 0 rgba(255,255,255,.26)}.car{width:13px;height:13px;border-radius:3px;border:1px solid rgba(124,248,208,.53);background:rgba(124,248,208,.09)}.train-label{position:absolute;left:45.5%;top:127px;color:var(--mint);font-size:7px;z-index:7}
+.flow{position:absolute;left:40%;padding:4px 7px;border-radius:999px;font-size:6.5px;letter-spacing:.1em}.flow.e{top:69px;color:var(--mint);background:rgba(124,248,208,.075)}.flow.a{top:148px;color:var(--amber);background:rgba(255,190,104,.075)}
+
+/* tertiary / bottom */
+.bottom{display:grid;grid-template-columns:1.08fr .92fr;gap:13px}.small-card{padding:16px;border-radius:18px}
+.timeline{height:146px;position:relative}.hours{display:grid;grid-template-columns:repeat(8,1fr);padding-left:76px;color:var(--muted2);font-size:7px;margin-bottom:9px}.tlrow{display:grid;grid-template-columns:72px 1fr;align-items:center;margin:12px 0}.tllabel{font-size:8px;color:var(--muted)}.track{height:22px;border-top:1px solid rgba(255,255,255,.055);border-bottom:1px solid rgba(255,255,255,.055);position:relative}.curve{position:absolute;left:7%;right:7%;top:4px;height:14px;background:linear-gradient(90deg,transparent,rgba(124,248,208,.17),rgba(124,248,208,.78),rgba(124,248,208,.18),transparent);clip-path:polygon(0 80%,14% 62%,26% 45%,38% 9%,55% 17%,69% 45%,84% 69%,100% 84%,100% 100%,0 100%)}.curve.d{background:linear-gradient(90deg,transparent,rgba(144,201,255,.14),rgba(144,201,255,.69),rgba(144,201,255,.18),transparent);clip-path:polygon(0 90%,16% 84%,31% 76%,46% 55%,60% 26%,73% 10%,85% 25%,100% 73%,100% 100%,0 100%)}.sched{position:absolute;top:5px;height:11px;border-radius:4px;display:grid;place-items:center;font-size:6px}.charge{left:10%;width:26%;color:var(--mint);background:var(--mint-soft)}.move{left:39%;width:18%;color:#c5d0cd;background:rgba(255,255,255,.035)}.dis{left:60%;width:20%;color:var(--blue);background:rgba(144,201,255,.08)}.ret{left:82%;width:14%;color:var(--amber);background:var(--amber-soft)}
+.mix{font-size:24px;font-weight:780}.mix .e{color:var(--mint)}.mix .a{color:var(--amber)}.mixsub{font-size:8px;color:var(--muted);margin-top:4px}.cars{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:12px}.carbox{height:28px;border-radius:6px;display:grid;place-items:center;font-size:7px;font-weight:800;border:1px solid rgba(255,255,255,.065)}.carbox.ess{color:var(--mint);border-color:rgba(124,248,208,.20);background:rgba(124,248,208,.075)}.carbox.bm{color:var(--amber);border-color:rgba(255,190,104,.20);background:rgba(255,190,104,.075)}
+.events{display:flex;flex-direction:column}.event{display:grid;grid-template-columns:40px 1fr auto;gap:7px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.045)}.event:last-child{border-bottom:0}.et{font-size:7.5px;color:var(--muted2)}.em{font-size:8px;color:#b5c2bf}.em b{color:#e9f1ef}.tag{font-size:6.5px;border:1px solid rgba(255,255,255,.065);padding:4px 5px;border-radius:999px;color:var(--muted)}.tag.up{color:var(--mint);border-color:rgba(124,248,208,.14);background:rgba(124,248,208,.05)}.tag.warn{color:var(--red);border-color:rgba(255,120,120,.16);background:rgba(255,120,120,.06)}
+.plans{display:grid;grid-template-columns:1fr;gap:7px}.plan{padding:10px 11px;border-radius:11px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.018);cursor:pointer;display:grid;grid-template-columns:1fr auto;align-items:center}.plan:hover{border-color:rgba(255,255,255,.12)}.plan.active{border-color:rgba(124,248,208,.18);background:rgba(124,248,208,.065)}.pname{font-size:8.5px;font-weight:720}.pdesc{font-size:7px;color:var(--muted);margin-top:3px}.pval{font-size:10px;font-weight:750}.plan.active .pval{color:var(--mint)}
+
+/* overlays */
+.overlay{position:fixed;inset:0;z-index:40;background:rgba(1,5,8,.58);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:.23s}.overlay.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;z-index:41;top:0;right:0;bottom:0;width:min(470px,94vw);padding:23px;overflow:auto;background:rgba(8,16,21,.80);border-left:1px solid rgba(255,255,255,.11);box-shadow:-28px 0 90px rgba(0,0,0,.4);backdrop-filter:blur(30px) saturate(145%);transform:translateX(102%);transition:.3s cubic-bezier(.2,.8,.2,1)}.drawer.show{transform:none}
+.drawer-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}.drawer-title{font-size:19px;font-weight:790}.drawer-sub{font-size:8.5px;color:var(--muted);line-height:1.55;margin-top:5px}.close{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.035);cursor:pointer}
+.input-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px}.mode{padding:8px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.025);text-align:center;font-size:7.5px;color:var(--muted)}.mode.active{color:var(--mint);background:var(--mint-soft);border-color:rgba(124,248,208,.17)}.mode.future{opacity:.47}
+.group{border-top:1px solid rgba(255,255,255,.05);padding-top:14px;margin-top:14px}.gtitle{font-size:8.5px;font-weight:760;color:#dce6e3;margin-bottom:10px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:7px;color:var(--muted);margin-bottom:5px}.field input,.field select,textarea{width:100%;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);border-radius:9px;padding:9px;outline:none;font-size:8.5px}.field select option{background:#111b20}.field input:focus,.field select:focus,textarea:focus{border-color:rgba(124,248,208,.27);box-shadow:0 0 0 3px rgba(124,248,208,.045)}textarea{height:90px;resize:vertical;line-height:1.5}.helper{font-size:7px;color:var(--muted2);line-height:1.5;margin-top:6px}.drawer-actions{display:flex;gap:7px;margin-top:15px}.drawer-actions button{flex:1}.file-label{display:block;border:1px dashed rgba(255,255,255,.12);border-radius:9px;padding:10px;text-align:center;color:var(--muted);font-size:7.5px;cursor:pointer}#fileInput{display:none}
+
+/* brief */
+.brief{position:fixed;z-index:51;left:50%;top:50%;width:min(920px,94vw);max-height:88vh;overflow:auto;padding:23px;border-radius:25px;opacity:0;pointer-events:none;transform:translate(-50%,-46%) scale(.97);transition:.25s;background:
+ radial-gradient(500px 240px at 80% 0%,rgba(255,190,104,.085),transparent 65%),
+ rgba(8,16,21,.86);border:1px solid rgba(255,255,255,.13);box-shadow:0 34px 110px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(32px) saturate(145%)}.brief.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.brief-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid rgba(255,255,255,.065);padding-bottom:16px}.brief-head h2{font-size:22px;margin:0}.snapshot{font-size:7px;color:var(--amber);border:1px solid rgba(255,190,104,.18);background:var(--amber-soft);border-radius:999px;padding:6px 8px}.brief-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:11px;margin-top:13px}.brief-sec{padding:14px;border-radius:13px;border:1px solid rgba(255,255,255,.065);background:rgba(255,255,255,.022)}.brief-sec h3{font-size:8px;color:var(--muted);letter-spacing:.08em;margin:0 0 9px}.brief-big{font-size:23px;font-weight:800;letter-spacing:-.04em}.brief-text{font-size:9.5px;line-height:1.7;color:#c6d2cf}.brief-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:11px}.bst{padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.065);background:rgba(255,255,255,.018)}.bst small{display:block;font-size:7px;color:var(--muted)}.bst b{display:block;font-size:12px;margin-top:5px}.green{color:var(--mint)}.ambertxt{color:var(--amber)}
+.toast{position:fixed;z-index:70;left:50%;bottom:22px;transform:translate(-50%,14px);opacity:0;padding:10px 13px;border-radius:11px;border:1px solid var(--line);background:rgba(11,21,26,.80);backdrop-filter:blur(22px);font-size:8px;box-shadow:var(--shadow);transition:.22s}.toast.show{opacity:1;transform:translate(-50%,0)}.toast b{color:var(--mint)}
+
+
+/* DIGITAL TWIN */
+.twin-panel{
+  padding:18px;border-radius:20px;
+  background:
+    radial-gradient(290px 180px at 16% 0%,rgba(144,201,255,.095),transparent 69%),
+    radial-gradient(230px 150px at 100% 18%,rgba(124,248,208,.06),transparent 70%),
+    linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.015)),
+    rgba(9,18,23,.60)
+}
+.twin-sync{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 11px;border:1px solid rgba(144,201,255,.12);
+  background:rgba(144,201,255,.045);border-radius:12px;margin-bottom:11px
+}
+.sync-left{display:flex;align-items:center;gap:8px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);box-shadow:0 0 12px rgba(144,201,255,.42)}
+.sync-title{font-size:8.5px;font-weight:730;color:#dce9f5}.sync-sub{font-size:6.8px;color:var(--muted);margin-top:2px}
+.sync-state{font-size:7px;color:var(--blue);letter-spacing:.08em}
+.twin-clocks{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.tclock{padding:9px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.065);background:rgba(255,255,255,.022)}
+.tclock small{display:block;font-size:6.5px;color:var(--muted);letter-spacing:.07em}
+.tclock strong{display:block;font-size:12px;margin-top:4px;font-variant-numeric:tabular-nums}
+.twin-assets{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.asset{
+  padding:9px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.055);
+  background:rgba(255,255,255,.018)
+}
+.asset small{font-size:6.5px;color:var(--muted);display:block}
+.asset b{font-size:14px;margin-top:4px;display:block}
+.asset b.mint{color:var(--mint)} .asset b.amber{color:var(--amber)} .asset b.blue{color:var(--blue)}
+.twin-divider{height:1px;background:rgba(255,255,255,.055);margin:13px 0}
+.sim-mini-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.sim-mini-title{font-size:8px;font-weight:740;letter-spacing:.05em}
+.sim-horizon{font-size:6.8px;color:var(--muted)}
+.twin-sim-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:11px}
+.tsim{padding:8px;border-radius:9px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018)}
+.tsim small{display:block;font-size:6.3px;color:var(--muted)}.tsim b{display:block;font-size:11px;margin-top:4px}
+.enter-twin{
+  width:100%;padding:9px;border-radius:10px;cursor:pointer;
+  border:1px solid rgba(144,201,255,.20);background:rgba(144,201,255,.075);
+  color:var(--blue);font-size:8px;font-weight:760;letter-spacing:.055em
+}
+
+/* twin mode modal */
+.twin-mode{
+  position:fixed;z-index:52;left:50%;top:50%;width:min(1040px,95vw);max-height:90vh;overflow:auto;
+  padding:23px;border-radius:26px;opacity:0;pointer-events:none;
+  transform:translate(-50%,-46%) scale(.97);transition:.25s;
+  background:
+    radial-gradient(620px 300px at 10% 0%,rgba(144,201,255,.10),transparent 66%),
+    radial-gradient(460px 260px at 90% 0%,rgba(124,248,208,.07),transparent 68%),
+    rgba(7,15,20,.88);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 36px 120px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(34px) saturate(145%)
+}
+.twin-mode.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.twin-mode-head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.065)}
+.twin-mode-title{font-size:21px;font-weight:800}.twin-mode-sub{font-size:8.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+.twin-live-badge{font-size:7px;color:var(--blue);padding:6px 8px;border-radius:999px;border:1px solid rgba(144,201,255,.18);background:rgba(144,201,255,.07);letter-spacing:.09em}
+.twin-timebar{margin-top:17px;padding:15px;border-radius:15px;border:1px solid rgba(255,255,255,.065);background:rgba(255,255,255,.022)}
+.twin-time-top{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px}
+.future-time{font-size:25px;font-weight:800;letter-spacing:-.04em}.future-label{font-size:7px;color:var(--muted);margin-bottom:4px}
+.range-wrap{position:relative;padding:0 3px}
+.range-wrap input[type=range]{width:100%;accent-color:var(--blue);cursor:pointer}
+.range-labels{display:flex;justify-content:space-between;color:var(--muted2);font-size:6.8px;margin-top:4px}
+.twin-future-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:11px;margin-top:12px}
+.future-card{padding:14px;border:1px solid rgba(255,255,255,.065);background:rgba(255,255,255,.021);border-radius:14px}
+.future-card h3{font-size:8px;color:var(--muted);letter-spacing:.08em;margin:0 0 10px}
+.future-state-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.future-stat{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018)}
+.future-stat small{display:block;font-size:6.5px;color:var(--muted)}.future-stat b{display:block;font-size:15px;margin-top:5px}
+.future-rail{height:170px;position:relative;border:1px solid rgba(255,255,255,.055);border-radius:12px;overflow:hidden;background:
+ linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(255,255,255,.016) 1px,transparent 1px),rgba(3,9,13,.25);background-size:26px 26px}
+.future-line{position:absolute;left:12%;right:12%;top:50%;height:2px;background:linear-gradient(90deg,var(--mint),rgba(255,255,255,.13),var(--blue))}
+.future-train{position:absolute;left:18%;top:69px;display:flex;gap:3px;align-items:center;transition:left .35s ease}
+.future-engine{width:37px;height:17px;border-radius:6px;background:linear-gradient(90deg,var(--mint2),var(--mint));box-shadow:0 0 12px rgba(124,248,208,.2)}
+.future-car{width:12px;height:12px;border-radius:3px;border:1px solid rgba(124,248,208,.48);background:rgba(124,248,208,.08)}
+.future-zone{position:absolute;top:14px;font-size:7px;color:var(--muted);letter-spacing:.1em}.fz-left{left:14px}.fz-right{right:14px}
+.future-explain{font-size:9px;color:#c1cecb;line-height:1.65;margin-top:11px}
+.twin-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:13px}
+
+@media(max-width:1080px){.layout{grid-template-columns:1fr}.right{display:grid;grid-template-columns:1fr 1fr}.status-strip{grid-template-columns:repeat(2,1fr)}.status-cell:nth-child(2){border-right:0}.status-cell:nth-child(-n+2){border-bottom:1px solid rgba(255,255,255,.07)}}
+@media(max-width:720px){.app{padding:12px}.topbar{height:auto;padding:7px 0 13px;align-items:flex-start}.brand-sub,.clock,.data-pill{display:none}.actions{flex-wrap:wrap;justify-content:flex-end}.pagehead{flex-direction:column;align-items:flex-start}.hero-grid,.bottom,.brief-grid{grid-template-columns:1fr}.right{display:flex}.status-value{font-size:22px}.status-cell{padding:12px}.network{height:278px}.node{width:104px}.rail{left:25%;right:25%}.brief-stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="bg-orb orb1"></div><div class="bg-orb orb2"></div><div class="bg-orb orb3"></div><div class="grid-bg"></div>
+<div class="app">
+<header class="topbar">
+ <div class="brand"><div class="logo"></div><div><div class="brand-title">RE:E-TRAIN LOOP</div><div class="brand-sub">AI Energy · Circular Logistics Control Tower</div></div></div>
+ <div class="actions">
+  <div class="data-pill" id="dataSource">SIMULATED DATA</div>
+  <div class="live-pill"><span class="live-dot"></span><span id="liveText">LIVE OPTIMIZING</span></div>
+  <div class="clock" id="clock"></div>
+  <button class="btn" id="inputBtn">상태 데이터 입력</button>
+  <button class="btn final" id="briefBtn">최종 브리핑</button>
+ </div>
+</header>
+
+<div class="pagehead">
+ <div><h1>운행 의사결정 센터</h1><p>현재 상태를 읽고 미래를 시뮬레이션해, 다음 운행 결정을 계속 갱신합니다.</p></div>
+ <div class="auto">AUTO RE-OPTIMIZATION <div class="switch on" id="autoSwitch"><i></i></div></div>
+</div>
+
+<section class="status-strip glass-secondary specular">
+ <div class="status-cell"><div class="status-label"><span class="dot"></span>호남 출력제어 예상</div><div class="status-value"><span id="curt">842</span><span class="unit">MWh</span></div><div class="status-meta">향후 6시간</div><div class="mini-track"><i id="curtBar" style="width:72%"></i></div></div>
+ <div class="status-cell"><div class="status-label"><span class="dot blue"></span>수도권 필요전력</div><div class="status-value"><span id="demand">615</span><span class="unit">MWh</span></div><div class="status-meta">16–19시 피크</div><div class="mini-track blue"><i id="demandBar" style="width:61%"></i></div></div>
+ <div class="status-cell"><div class="status-label"><span class="dot"></span>수도권 ESS Pool</div><div class="status-value"><span id="capitalEss">31</span><span class="unit">/ <span id="capitalMax">40</span>량</span></div><div class="status-meta" id="poolState">78% · 회송 검토</div><div class="mini-track"><i id="essBar" style="width:78%"></i></div></div>
+ <div class="status-cell"><div class="status-label"><span class="dot amber"></span>Circular Cargo</div><div class="status-value"><span id="cargo">146</span><span class="unit">t</span></div><div class="status-meta">즉시 출고 가능</div><div class="mini-track amber"><i id="cargoBar" style="width:58%"></i></div></div>
+</section>
+
+<main class="layout">
+<div class="left">
+ <section class="hero glass-primary specular">
+  <div class="heroGlow"></div><div class="heroAccent"></div>
+  <div class="hero-headline"><span class="eyebrow">AI RECOMMENDATION</span><span class="decision-badge" id="planType">BALANCED</span><span class="meta" style="margin-left:auto">Last optimized <span id="lastOpt">just now</span></span></div>
+  <div class="hero-grid">
+   <div>
+    <div class="route"><div><div class="route-time" id="depart">15:10</div><div class="station" id="origin">남원</div></div><div class="arrow">ENERGY UP<div class="arrowline"></div></div><div style="text-align:right"><div style="height:42px"></div><div class="station" id="dest">안중</div></div></div>
+    <div class="chips"><div class="chip energy">상행 ESS <b id="upEss">20량</b></div><div class="chip energy">운송 에너지 <b id="energy">192 MWh</b></div><div class="chip">하행 ESS <b id="returnEss">13량</b></div><div class="chip circular">Black Mass <b id="bmCars">7량</b></div></div>
+    <div class="note" id="note">다음 호남권 충전수요를 확보하면서 수도권 ESS 재고를 안정 범위로 낮추고, 하행 잔여 용량을 순환자원 운송에 활용하는 균형안입니다.</div>
+   </div>
+   <div><div class="hero-metrics"><div class="hero-metric key"><small>예상 순편익</small><strong id="profit">₩18.4M</strong></div><div class="hero-metric"><small>호남 ESS 준비율</small><strong id="ready">112%</strong></div><div class="hero-metric"><small>수도권 예상재고</small><strong id="futureStock">26 / 40</strong></div><div class="hero-metric"><small>병목 위험</small><strong id="risk">LOW · 8%</strong></div></div><button class="why" id="whyBtn">WHY THIS PLAN?</button></div>
+  </div>
+ </section>
+
+ <section class="network-card card glass-secondary specular">
+  <div class="head"><div class="title">RAIL NETWORK <span class="badge">LIVE FLOW</span></div><div class="meta" id="trackSummary">주요 구간 정상</div></div>
+  <div class="network">
+   <div class="zone zl">HONAM ENERGY ZONE</div><div class="zone zr">CAPITAL DEMAND ZONE</div><div class="rail"></div>
+   <div class="branch b1"></div><div class="branch b2"></div><div class="branch b3"></div><div class="branch b4"></div><div class="branch b5"></div>
+   <div class="node sup n1"><div class="n">장성</div><div class="s">출력제어 <b>+126MWh</b></div></div><div class="node sup n2"><div class="n">동산</div><div class="s">출력제어 <b>+188MWh</b></div></div><div class="node sup n3"><div class="n">남원</div><div class="s">출력제어 <b>+248MWh</b></div></div>
+   <div class="node dem n4"><div class="n">안중</div><div class="s">필요전력 <b>182MWh</b></div></div><div class="node dem n5"><div class="n">서화성</div><div class="s">필요전력 <b>164MWh</b></div></div>
+   <div class="flow e">ENERGY ↑</div><div class="flow a">CIRCULAR CARGO ↓</div><div class="train" id="train"><div class="engine"></div><div class="car"></div><div class="car"></div><div class="car"></div><div class="car"></div></div><div class="train-label" id="trainLabel">E01 · 192MWh</div>
+  </div>
+ </section>
+
+ <div class="bottom">
+  <section class="small-card card glass-tertiary"><div class="head"><div class="title">24H ROLLING TIMELINE</div><div class="meta">예측 + 현재상태</div></div><div class="timeline"><div class="hours"><span>10</span><span>12</span><span>14</span><span>16</span><span>18</span><span>20</span><span>22</span><span>24</span></div><div class="tlrow"><div class="tllabel">출력제어</div><div class="track"><div class="curve"></div></div></div><div class="tlrow"><div class="tllabel">수도권 수요</div><div class="track"><div class="curve d"></div></div></div><div class="tlrow"><div class="tllabel">E01 운행</div><div class="track"><div class="sched charge">CHARGE</div><div class="sched move">MOVE</div><div class="sched dis">DISCHARGE</div><div class="sched ret">RETURN</div></div></div></div></section>
+  <section class="small-card card glass-tertiary"><div class="head"><div class="title">RETURN COMPOSITION</div><span class="badge">20-CAR LIMIT</span></div><div class="mix"><span class="e" id="mixEss">13 ESS</span> + <span class="a" id="mixBm">7 BM</span></div><div class="mixsub">ESS 회송과 하행 순환화물의 현재 최적 편성</div><div class="cars" id="cars"></div></section>
+ </div>
+</div>
+
+<aside class="right">
+ <section class="twin-panel card glass-secondary specular">
+  <div class="head"><div class="title">DIGITAL TWIN</div><span class="badge" id="simState">SYNCED</span></div>
+  <div class="twin-sync">
+    <div class="sync-left"><span class="sync-dot"></span><div><div class="sync-title">LIVE STATE</div><div class="sync-sub">현실/가상 입력과 Twin 상태 동기화</div></div></div>
+    <div class="sync-state" id="syncState">● SYNCED</div>
+  </div>
+  <div class="twin-clocks">
+    <div class="tclock"><small>REAL CLOCK</small><strong id="realClock">--:--:--</strong></div>
+    <div class="tclock"><small>SIM CLOCK</small><strong id="simClock">--:--:--</strong></div>
+  </div>
+  <div class="twin-assets">
+    <div class="asset"><small>ACTIVE TRAIN</small><b class="blue" id="activeTrain">3</b></div>
+    <div class="asset"><small>ESS ASSETS</small><b class="mint" id="essAssets">78</b></div>
+    <div class="asset"><small>ACTIVE CARGO</small><b class="amber" id="activeCargo">146t</b></div>
+    <div class="asset"><small>TRACK EVENTS</small><b id="trackEvents">0</b></div>
+  </div>
+  <div class="twin-divider"></div>
+  <div class="sim-mini-head"><div class="sim-mini-title">SIMULATION</div><div class="sim-horizon">Current horizon · +24h</div></div>
+  <div class="twin-sim-row">
+    <div class="tsim"><small>TWIN INSTANCES</small><b id="scenarioCount">128</b></div>
+    <div class="tsim"><small>COMPLETED</small><b id="completedTwins">128</b></div>
+    <div class="tsim"><small>NEXT RE-OPT</small><b id="countdown">00:08</b></div>
+  </div>
+  <button class="enter-twin" id="enterTwinBtn">ENTER TWIN MODE →</button>
+</section>
+ <section class="small-card card glass-tertiary"><div class="head"><div class="title">PLAN OPTIONS</div><div class="meta">운영성향</div></div><div class="plans"><div class="plan active" data-plan="balanced"><div><div class="pname">Balanced</div><div class="pdesc">수익과 순환 안정성 균형</div></div><div class="pval">13 + 7</div></div><div class="plan" data-plan="profit"><div><div class="pname">Profit First</div><div class="pdesc">하행 화물수익 우선</div></div><div class="pval">10 + 10</div></div><div class="plan" data-plan="stable"><div><div class="pname">Stability First</div><div class="pdesc">ESS 회송 안정성 우선</div></div><div class="pval">18 + 2</div></div></div></section>
+ <section class="small-card card glass-tertiary"><div class="head"><div class="title">LIVE EVENTS</div><span class="badge">STREAM</span></div><div class="events" id="events"><div class="event"><div class="et">12:00</div><div class="em"><b>안중 수요예측</b> +8.4%</div><span class="tag up">UPDATED</span></div><div class="event"><div class="et">11:54</div><div class="em"><b>A사 Black Mass</b> +24t</div><span class="tag">CARGO</span></div><div class="event"><div class="et">11:47</div><div class="em"><b>남원 ESS</b> 5량 완충</div><span class="tag">ESS</span></div><div class="event"><div class="et">11:38</div><div class="em"><b>주요 선로</b> 정상 운행</div><span class="tag">RAIL</span></div></div></section>
+</aside>
+</main>
+</div>
+
+<div class="overlay" id="inputOverlay"></div>
+<aside class="drawer" id="inputDrawer">
+ <div class="drawer-head"><div><div class="drawer-title">실시간 상태 데이터 입력</div><div class="drawer-sub">현재는 수동·가상 데이터를 넣고, 상용화 시 같은 입력 구조를 API/IoT 스트림으로 교체합니다.</div></div><button class="close" id="inputClose">×</button></div>
+ <div class="input-modes"><div class="mode active">MANUAL / SIM</div><div class="mode">FILE IMPORT</div><div class="mode future">LIVE API · FUTURE</div></div>
+ <div class="group"><div class="gtitle">ENERGY STATE</div><div class="formgrid"><div class="field"><label>호남 출력제어 예측 (MWh)</label><input id="inCurt" type="number" value="842"></div><div class="field"><label>수도권 필요전력 (MWh)</label><input id="inDemand" type="number" value="615"></div><div class="field"><label>ESS 평균 SOC (%)</label><input id="inSoc" type="number" value="74"></div><div class="field"><label>충전 완료 ESS (량)</label><input id="inCharged" type="number" value="20"></div></div></div>
+ <div class="group"><div class="gtitle">ESS INVENTORY</div><div class="formgrid"><div class="field"><label>호남 ESS Pool</label><input id="inHonam" type="number" value="28"></div><div class="field"><label>수도권 ESS Pool</label><input id="inCapital" type="number" value="31"></div><div class="field"><label>수도권 수용한도</label><input id="inMax" type="number" value="40"></div><div class="field"><label>내일 호남 필요 ESS</label><input id="inNeed" type="number" value="26"></div></div></div>
+ <div class="group"><div class="gtitle">CIRCULAR CARGO & RAIL</div><div class="formgrid"><div class="field"><label>Black Mass (t)</label><input id="inBM" type="number" value="118"></div><div class="field"><label>기타 회수화물 (t)</label><input id="inOther" type="number" value="28"></div><div class="field"><label>안중 노선</label><select id="inAnjung"><option value="normal">정상</option><option value="delay">지연</option><option value="blocked">사용 불가</option></select></div><div class="field"><label>서화성 노선</label><select id="inSeoh"><option value="normal">정상</option><option value="delay">지연</option><option value="blocked">사용 불가</option></select></div></div></div>
+ <div class="group"><div class="gtitle">JSON / CSV IMPORT</div><label class="file-label" for="fileInput">JSON 또는 CSV 파일 불러오기</label><input id="fileInput" type="file" accept=".json,.csv"><textarea id="jsonArea" placeholder='{"curtailment_mwh":842,"capital_demand_mwh":615,"capital_ess":31,"black_mass_t":118}'></textarea><div class="helper">가상 실시간 입력을 재현하기 위한 프로토타입입니다. 상용화 시 이 입력층을 외부 데이터 커넥터로 대체합니다.</div><div class="drawer-actions"><button class="btn" id="sampleBtn">샘플</button><button class="btn" id="parseBtn">텍스트 적용</button></div></div>
+ <div class="drawer-actions"><button class="btn" id="cancelBtn">취소</button><button class="btn primary" id="applyBtn">상태 반영 & 재최적화</button></div>
+</aside>
+
+<div class="overlay" id="whyOverlay"></div>
+<aside class="drawer" id="whyDrawer"><div class="drawer-head"><div><div class="drawer-title">왜 이 운행안인가?</div><div class="drawer-sub">중요한 의사결정 근거만 압축해 보여줍니다.</div></div><button class="close" id="whyClose">×</button></div><div class="group"><div class="gtitle">ENERGY</div><div class="drawer-sub" id="whyEnergy"></div></div><div class="group"><div class="gtitle">ESS INVENTORY</div><div class="drawer-sub" id="whyEss"></div></div><div class="group"><div class="gtitle">RETURN CARGO</div><div class="drawer-sub" id="whyCargo"></div></div><div class="group"><div class="gtitle">RAIL</div><div class="drawer-sub" id="whyRail"></div></div></aside>
+
+
+<div class="overlay" id="twinOverlay"></div>
+<section class="twin-mode specular" id="twinMode">
+  <div class="twin-mode-head">
+    <div>
+      <div style="font-size:7px;color:var(--blue);letter-spacing:.13em;margin-bottom:7px">DIGITAL TWIN · FUTURE EXPLORER</div>
+      <div class="twin-mode-title">24시간 미래 상태 탐색</div>
+      <div class="twin-mode-sub">현재 상태 Snapshot을 기준으로 시간축을 움직이며 추천 운행안이 만든 미래 ESS·화물·열차 상태를 확인합니다.</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><span class="twin-live-badge">SIMULATION +24H</span><button class="close" id="closeTwin">×</button></div>
+  </div>
+
+  <div class="twin-timebar">
+    <div class="twin-time-top">
+      <div><div class="future-label">SELECTED SIMULATION TIME</div><div class="future-time" id="futureTimeLabel">NOW · 0h</div></div>
+      <div style="text-align:right"><div class="future-label">TWIN INSTANCE</div><div style="font-size:12px;font-weight:750" id="twinInstanceLabel">#047 / 128</div></div>
+    </div>
+    <div class="range-wrap">
+      <input type="range" id="twinRange" min="0" max="24" step="1" value="0">
+      <div class="range-labels"><span>NOW</span><span>+6H</span><span>+12H</span><span>+18H</span><span>+24H</span></div>
+    </div>
+  </div>
+
+  <div class="twin-future-grid">
+    <div class="future-card">
+      <h3>PROJECTED TWIN STATE</h3>
+      <div class="future-state-grid">
+        <div class="future-stat"><small>수도권 ESS POOL</small><b class="green" id="futureCapitalEss">31 / 40</b></div>
+        <div class="future-stat"><small>호남 ESS POOL</small><b id="futureHonamEss">28</b></div>
+        <div class="future-stat"><small>TRAIN E01</small><b class="green" id="futureTrainState">남원 · 충전</b></div>
+        <div class="future-stat"><small>ESS AVG SOC</small><b id="futureSoc">74%</b></div>
+        <div class="future-stat"><small>CIRCULAR CARGO</small><b class="ambertxt" id="futureCargo">146t</b></div>
+        <div class="future-stat"><small>BOTTLENECK RISK</small><b id="futureRisk">8%</b></div>
+      </div>
+      <div class="future-explain" id="futureExplain">현재 시점의 Digital Twin 상태입니다. 슬라이더를 움직이면 현재 추천안이 실행됐다고 가정한 미래 상태를 확인할 수 있습니다.</div>
+    </div>
+
+    <div class="future-card">
+      <h3>TRAIN MOVEMENT · TWIN VIEW</h3>
+      <div class="future-rail">
+        <div class="future-zone fz-left">HONAM</div><div class="future-zone fz-right">CAPITAL</div>
+        <div class="future-line"></div>
+        <div class="future-train" id="futureTrain"><div class="future-engine"></div><div class="future-car"></div><div class="future-car"></div><div class="future-car"></div></div>
+      </div>
+      <div class="future-explain"><b style="color:var(--blue)">Twin Mode</b>는 실제 운행을 바꾸지 않습니다. 현재 상태를 복제한 가상 시스템에서 계획 실행 후의 상태만 탐색합니다.</div>
+    </div>
+  </div>
+  <div class="twin-actions"><button class="btn" id="resetTwin">NOW로 돌아가기</button><button class="btn primary" id="closeTwinBottom">Twin Mode 종료</button></div>
+</section>
+
+<div class="overlay" id="briefOverlay"></div>
+<section class="brief specular" id="brief">
+ <div class="brief-head"><div><div style="font-size:7px;color:var(--amber);letter-spacing:.13em;margin-bottom:7px">FINAL OPERATION BRIEF</div><h2>RE:E-TRAIN LOOP 최종 브리핑</h2><div class="drawer-sub" id="briefTime"></div></div><span class="snapshot">STATE SNAPSHOT</span></div>
+ <div class="brief-grid">
+  <div class="brief-sec"><h3>FINAL RECOMMENDATION</h3><div class="brief-big" id="briefRoute"></div><div class="brief-text" id="briefDesc"></div><div class="brief-stats"><div class="bst"><small>예상 순편익</small><b class="green" id="briefProfit"></b></div><div class="bst"><small>병목 위험</small><b id="briefRisk"></b></div><div class="bst"><small>호남 준비율</small><b id="briefReady"></b></div></div></div>
+  <div class="brief-sec"><h3>WHY THIS PLAN</h3><div class="brief-text" id="briefWhy"></div></div>
+  <div class="brief-sec"><h3>STATE SNAPSHOT</h3><div class="brief-text" id="briefState"></div></div>
+  <div class="brief-sec"><h3>OPERATOR NOTE</h3><div class="brief-text">브리핑 생성 시점의 입력값과 추천안을 고정한 Snapshot입니다. 운영 재개 후에는 새로운 상태가 들어올 때마다 자동 재최적화를 다시 수행합니다.</div></div>
+ </div>
+ <div class="drawer-actions" style="justify-content:flex-end"><button class="btn" id="closeBrief">닫기</button><button class="btn primary" id="resumeBtn">운영 재개</button></div>
+</section>
+<div class="toast" id="toast">상태를 반영해 <b>운행안을 재최적화했습니다.</b></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let auto=true,frozen=false,countdown=8,simIdx=0;
+let state={curtailment:842,demand:615,soc:74,charged:20,honam:28,capital:31,max:40,need:26,bm:118,other:28,anjung:"normal",seoh:"normal",source:"SIMULATED DATA"};
+let plan={};
+
+function now(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
+function buildCars(e,b){const c=$("#cars");c.innerHTML="";for(let i=0;i<20;i++){let x=document.createElement("div");x.className="carbox "+(i<e?"ess":"bm");x.textContent=i<e?"ESS":"BM";c.appendChild(x)}}
+function toast(msg='상태를 반영해 <b>운행안을 재최적화했습니다.</b>'){const t=$("#toast");t.innerHTML=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2100)}
+function addEvent(text,tag="UPDATED",warn=false){const e=document.createElement("div");e.className="event";e.innerHTML=`<div class="et">${now()}</div><div class="em">${text}</div><span class="tag ${warn?"warn":"up"}">${tag}</span>`;$("#events").prepend(e);while($("#events").children.length>4)$("#events").lastElementChild.remove()}
+
+function solve(){
+  const shortage=Math.max(0,state.need-state.honam);
+  const pressure=Math.max(0,state.capital-state.max*.68);
+  let ret=Math.round(Math.min(20,Math.max(6,shortage+pressure+5)));
+  if(state.curtailment>1000)ret=Math.max(ret,17);
+  if(state.capital/state.max>.88)ret=Math.max(ret,18);
+  let bmCars=Math.min(Math.max(0,20-ret),Math.max(0,Math.round((state.bm+state.other)/20)));
+  ret=20-bmCars;
+  let dest="안중"; if(state.anjung==="blocked")dest="서화성"; else if(state.seoh==="normal"&&state.demand<600)dest="서화성"; if(state.seoh==="blocked")dest="안중";
+  const origin=state.curtailment<760?"동산":"남원";
+  const energy=Math.min(200,Math.max(120,Math.round(state.curtailment*.23)));
+  const delay=(state.anjung==="delay"||state.seoh==="delay")?1.1:0;
+  const p=energy*.091355+bmCars*.38-delay;
+  const riskPct=Math.min(42,Math.max(3,Math.round((state.capital-ret)/state.max*24+Math.max(0,10-state.honam+state.need-ret))));
+  const risk=riskPct<10?"LOW":riskPct<24?"MEDIUM":"HIGH";
+  const future=Math.max(0,state.capital+20-ret-12);
+  const ready=Math.round((state.honam+ret)/Math.max(1,state.need)*100);
+  const type=bmCars>=9?"CARGO PRIORITY":ret>=17?"ENERGY PRIORITY":"BALANCED";
+  plan={ret,bmCars,dest,origin,energy,profit:`₩${p.toFixed(1)}M`,risk:`${risk} · ${riskPct}%`,future:`${future} / ${state.max}`,ready:`${ready}%`,type,depart:(state.anjung==="delay"||state.seoh==="delay")?"15:35":"15:10"};
+  render();
+}
+function render(){
+ $("#curt").textContent=state.curtailment;$("#demand").textContent=state.demand;$("#capitalEss").textContent=state.capital;$("#capitalMax").textContent=state.max;$("#cargo").textContent=state.bm+state.other;
+ $("#curtBar").style.width=Math.min(96,state.curtailment/12)+"%";$("#demandBar").style.width=Math.min(95,state.demand/9.5)+"%";let ratio=Math.round(state.capital/state.max*100);$("#essBar").style.width=Math.min(100,ratio)+"%";$("#cargoBar").style.width=Math.min(95,(state.bm+state.other)/2.4)+"%";$("#poolState").textContent=ratio+"% · "+(ratio>88?"회송 우선":ratio>72?"회송 검토":"안정");
+ $("#depart").textContent=plan.depart;$("#origin").textContent=plan.origin;$("#dest").textContent=plan.dest;$("#upEss").textContent=state.charged+"량";$("#energy").textContent=plan.energy+" MWh";$("#returnEss").textContent=plan.ret+"량";$("#bmCars").textContent=plan.bmCars+"량";$("#mixEss").textContent=plan.ret+" ESS";$("#mixBm").textContent=plan.bmCars+" BM";
+ $("#profit").textContent=plan.profit;$("#ready").textContent=plan.ready;$("#futureStock").textContent=plan.future;$("#risk").textContent=plan.risk;$("#planType").textContent=plan.type;$("#dataSource").textContent=state.source;$("#lastOpt").textContent="just now";$("#trainLabel").textContent=`E01 · ${plan.energy}MWh`;buildCars(plan.ret,plan.bmCars);
+ $("#trackSummary").textContent=(state.anjung==="normal"&&state.seoh==="normal")?"주요 구간 정상":"노선 제약 반영 중";
+ let note=plan.type==="CARGO PRIORITY"?"호남의 최소 ESS 준비량을 유지하면서 증가한 하행 순환화물 수익을 적극 활용하는 안입니다.":plan.type==="ENERGY PRIORITY"?"향후 호남 출력제어 대응을 위해 ESS 회송을 우선해 다음 충전능력을 확보하는 안입니다.":"다음 호남 충전수요를 확보하면서 수도권 ESS 재고를 안정 범위로 낮추고, 남는 하행 슬롯을 순환자원 운송에 사용하는 균형안입니다.";
+ $("#note").textContent=note;
+ $("#whyEnergy").textContent=`출력제어 ${state.curtailment}MWh와 수도권 필요전력 ${state.demand}MWh를 함께 비교해 ${plan.origin} → ${plan.dest} 운행을 우선했습니다.`;
+ $("#whyEss").textContent=`호남 ${state.honam}량 / 수도권 ${state.capital}량 / 내일 호남 필요 ${state.need}량을 기준으로 ESS ${plan.ret}량 회송이 필요합니다.`;
+ $("#whyCargo").textContent=`현재 Black Mass ${state.bm}t와 기타 회수화물 ${state.other}t 중 편성 여유에 맞춰 ${plan.bmCars}량을 배정했습니다.`;
+ $("#whyRail").textContent=`안중 ${state.anjung}, 서화성 ${state.seoh} 상태를 반영해 가용 경로를 비교했습니다.`;
+ updateTwinPanel();
+}
+function sync(){$("#inCurt").value=state.curtailment;$("#inDemand").value=state.demand;$("#inSoc").value=state.soc;$("#inCharged").value=state.charged;$("#inHonam").value=state.honam;$("#inCapital").value=state.capital;$("#inMax").value=state.max;$("#inNeed").value=state.need;$("#inBM").value=state.bm;$("#inOther").value=state.other;$("#inAnjung").value=state.anjung;$("#inSeoh").value=state.seoh}
+function read(){state.curtailment=+$("#inCurt").value||0;state.demand=+$("#inDemand").value||0;state.soc=+$("#inSoc").value||0;state.charged=+$("#inCharged").value||0;state.honam=+$("#inHonam").value||0;state.capital=+$("#inCapital").value||0;state.max=Math.max(1,+$("#inMax").value||40);state.need=+$("#inNeed").value||0;state.bm=+$("#inBM").value||0;state.other=+$("#inOther").value||0;state.anjung=$("#inAnjung").value;state.seoh=$("#inSeoh").value;state.source="MANUAL INPUT"}
+function openInput(){sync();$("#inputOverlay").classList.add("show");$("#inputDrawer").classList.add("show")}function closeInput(){$("#inputOverlay").classList.remove("show");$("#inputDrawer").classList.remove("show")}
+$("#inputBtn").onclick=openInput;$("#inputClose").onclick=closeInput;$("#cancelBtn").onclick=closeInput;$("#inputOverlay").onclick=closeInput;
+$("#applyBtn").onclick=()=>{read();solve();addEvent("<b>수동 상태 입력</b> 반영","RE-OPT");closeInput();toast()};
+
+function payload(o){if(o.curtailment_mwh!=null)state.curtailment=+o.curtailment_mwh;if(o.capital_demand_mwh!=null)state.demand=+o.capital_demand_mwh;if(o.honam_ess!=null)state.honam=+o.honam_ess;if(o.capital_ess!=null)state.capital=+o.capital_ess;if(o.capital_max!=null)state.max=+o.capital_max;if(o.tomorrow_honam_need!=null)state.need=+o.tomorrow_honam_need;if(o.black_mass_t!=null)state.bm=+o.black_mass_t;if(o.other_cargo_t!=null)state.other=+o.other_cargo_t;if(o.anjung_track)state.anjung=o.anjung_track;if(o.seohwaseong_track)state.seoh=o.seohwaseong_track;state.source="FILE / JSON"}
+$("#sampleBtn").onclick=()=>$("#jsonArea").value=JSON.stringify({curtailment_mwh:1080,capital_demand_mwh:690,honam_ess:24,capital_ess:36,capital_max:40,tomorrow_honam_need:31,black_mass_t:164,other_cargo_t:36,anjung_track:"normal",seohwaseong_track:"delay"},null,2);
+$("#parseBtn").onclick=()=>{try{payload(JSON.parse($("#jsonArea").value));sync();solve();addEvent("<b>JSON 상태</b> 반영","IMPORTED");toast("입력 데이터를 <b>정상 반영했습니다.</b>")}catch(e){toast("JSON 형식을 확인해주세요.")}};
+$("#fileInput").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let txt=r.result;$("#jsonArea").value=txt;try{if(f.name.endsWith(".json"))payload(JSON.parse(txt));else{let rows=txt.trim().split(/\r?\n/),h=rows[0].split(","),v=rows[1].split(","),o={};h.forEach((x,i)=>o[x.trim()]=v[i].trim());payload(o)}sync();solve();addEvent(`<b>${f.name}</b> 반영`,"FILE");toast("파일 데이터를 <b>불러왔습니다.</b>")}catch(err){toast("파일 형식을 확인해주세요.")}};r.readAsText(f)};
+
+function openWhy(){$("#whyOverlay").classList.add("show");$("#whyDrawer").classList.add("show")}function closeWhy(){$("#whyOverlay").classList.remove("show");$("#whyDrawer").classList.remove("show")}$("#whyBtn").onclick=openWhy;$("#whyClose").onclick=closeWhy;$("#whyOverlay").onclick=closeWhy;
+
+function brief(){frozen=true;auto=false;$("#autoSwitch").classList.remove("on");$("#simState").textContent="SNAPSHOT";$("#syncState").textContent="● SNAPSHOT";$("#liveText").textContent="BRIEFING SNAPSHOT";$("#briefTime").textContent=new Date().toLocaleString("ko-KR")+" · "+state.source;$("#briefRoute").textContent=`${plan.depart} · ${plan.origin} → ${plan.dest}`;$("#briefDesc").textContent=`상행 ESS ${state.charged}량에 ${plan.energy}MWh를 운송하고, 하행은 ESS ${plan.ret}량 + Black Mass ${plan.bmCars}량으로 편성합니다.`;$("#briefProfit").textContent=plan.profit;$("#briefRisk").textContent=plan.risk;$("#briefReady").textContent=plan.ready;$("#briefWhy").textContent=$("#note").textContent;$("#briefState").innerHTML=`호남 출력제어 <b class="green">${state.curtailment}MWh</b><br>수도권 필요전력 <b>${state.demand}MWh</b><br>수도권 ESS <b>${state.capital}/${state.max}량</b><br>호남 ESS <b>${state.honam}량</b><br>Black Mass <b class="ambertxt">${state.bm}t</b>`;$("#briefOverlay").classList.add("show");$("#brief").classList.add("show")}
+$("#briefBtn").onclick=brief;function closeBrief(){$("#briefOverlay").classList.remove("show");$("#brief").classList.remove("show")}$("#closeBrief").onclick=closeBrief;$("#briefOverlay").onclick=closeBrief;$("#resumeBtn").onclick=()=>{closeBrief();frozen=false;auto=true;$("#autoSwitch").classList.add("on");$("#simState").textContent="SYNCED";$("#syncState").textContent="● SYNCED";$("#liveText").textContent="LIVE OPTIMIZING";addEvent("<b>자동 최적화</b> 운영 재개","LIVE");toast("실시간 <b>재최적화를 재개했습니다.</b>")};
+
+$("#autoSwitch").onclick=()=>{auto=!auto;$("#autoSwitch").classList.toggle("on",auto);$("#simState").textContent=auto?"SYNCED":"PAUSED";$("#syncState").textContent=auto?"● SYNCED":"● PAUSED";$("#liveText").textContent=auto?"LIVE OPTIMIZING":"MONITORING PAUSED"};
+
+
+function updateTwinPanel(){
+  const d=new Date();
+  const clock=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+  if($("#realClock"))$("#realClock").textContent=clock;
+  if($("#simClock"))$("#simClock").textContent=clock;
+  if($("#essAssets"))$("#essAssets").textContent=state.honam+state.capital+Math.max(0,state.charged);
+  if($("#activeCargo"))$("#activeCargo").textContent=(state.bm+state.other)+"t";
+  if($("#trackEvents"))$("#trackEvents").textContent=(state.anjung!=="normal"?1:0)+(state.seoh!=="normal"?1:0);
+  if($("#completedTwins"))$("#completedTwins").textContent=$("#scenarioCount")?$("#scenarioCount").textContent:"128";
+}
+function projectTwin(h){
+  const departureHour=2;
+  const arrivalHour=5;
+  const dischargeEnd=8;
+  const returnStart=9;
+  const returnEnd=13;
+
+  let capital=state.capital;
+  let honam=state.honam;
+  let soc=state.soc;
+  let cargo=state.bm+state.other;
+  let trainState="남원 · 충전";
+  let pos=18;
+  let riskNum=parseInt((plan.risk||"8").match(/\d+/)?.[0]||8);
+
+  if(h<=departureHour){
+    soc=Math.min(100,state.soc+h*8);
+    trainState=h<departureHour?"남원 · 충전":"남원 · 출발 준비";
+    pos=18;
+  }else if(h<=arrivalHour){
+    soc=Math.min(100,state.soc+departureHour*8);
+    trainState="상행 운행 중";
+    pos=18+((h-departureHour)/(arrivalHour-departureHour))*58;
+  }else if(h<=dischargeEnd){
+    capital=state.capital+state.charged;
+    soc=Math.max(10,100-(h-arrivalHour)*28);
+    trainState=plan.dest+" · 방전";
+    pos=76;
+    riskNum=Math.max(2,riskNum+Math.round((capital/state.max-.75)*20));
+  }else if(h<=returnStart){
+    capital=state.capital+state.charged;
+    soc=12;
+    trainState=plan.dest+" · 회송 편성";
+    pos=76;
+    cargo=Math.max(0,cargo-plan.bmCars*20);
+  }else if(h<=returnEnd){
+    capital=Math.max(0,state.capital+state.charged-plan.ret);
+    honam=state.honam;
+    soc=12;
+    trainState="하행 운행 중";
+    pos=76-((h-returnStart)/(returnEnd-returnStart))*58;
+    cargo=Math.max(0,cargo-plan.bmCars*20);
+    riskNum=Math.max(2,riskNum-Math.round((h-returnStart)*1.2));
+  }else{
+    capital=Math.max(0,state.capital+state.charged-plan.ret-6);
+    honam=state.honam+plan.ret;
+    soc=Math.min(68,12+(h-returnEnd)*5);
+    trainState="호남 · 회송 완료";
+    pos=18;
+    cargo=Math.max(0,cargo-plan.bmCars*20);
+    riskNum=Math.max(1,riskNum-4);
+  }
+  if(h>18){
+    const nextCycle=Math.min(state.charged,Math.floor((h-18)/3)*3);
+    honam=Math.max(0,honam-nextCycle);
+    capital=Math.min(state.max,capital+Math.floor(nextCycle*.6));
+  }
+  return {capital:Math.round(capital),honam:Math.round(honam),soc:Math.round(soc),cargo:Math.round(cargo),trainState,pos:Math.max(18,Math.min(76,pos)),risk:Math.max(1,Math.round(riskNum))};
+}
+function renderTwinMode(){
+  const h=+$("#twinRange").value;
+  const p=projectTwin(h);
+  $("#futureTimeLabel").textContent=h===0?"NOW · 0h":`NOW + ${h}h`;
+  $("#futureCapitalEss").textContent=`${p.capital} / ${state.max}`;
+  $("#futureHonamEss").textContent=p.honam;
+  $("#futureTrainState").textContent=p.trainState;
+  $("#futureSoc").textContent=p.soc+"%";
+  $("#futureCargo").textContent=p.cargo+"t";
+  $("#futureRisk").textContent=p.risk+"%";
+  $("#futureTrain").style.left=p.pos+"%";
+  let explanation="";
+  if(h===0) explanation="현재 시점의 Digital Twin 상태입니다. 슬라이더를 움직이면 추천 운행안 실행 이후의 가상 상태가 펼쳐집니다.";
+  else if(h<=2) explanation=`출발 전 충전 구간입니다. ESS 평균 SOC가 ${p.soc}%까지 상승하는 것으로 시뮬레이션됩니다.`;
+  else if(h<=5) explanation=`E01이 수도권으로 상행 중입니다. 현재 계획대로라면 ${plan.dest} 도착 후 방전을 시작합니다.`;
+  else if(h<=8) explanation=`수도권 도착 후 방전 단계입니다. 수도권 ESS Pool은 ${p.capital}량으로 증가해 회송 필요성이 커집니다.`;
+  else if(h<=13) explanation=`ESS ${plan.ret}량과 Black Mass ${plan.bmCars}량을 포함한 하행 편성이 진행됩니다. 수도권 병목 위험은 ${p.risk}% 수준으로 완화됩니다.`;
+  else explanation=`하행 회송 완료 후 호남 ESS Pool이 ${p.honam}량으로 회복됩니다. 다음 출력제어 대응을 위한 순환 준비 단계입니다.`;
+  $("#futureExplain").textContent=explanation;
+}
+function openTwinMode(){
+  $("#twinRange").value=0;
+  $("#twinInstanceLabel").textContent=`#${String(47+simIdx).padStart(3,"0")} / ${$("#scenarioCount").textContent}`;
+  renderTwinMode();
+  $("#twinOverlay").classList.add("show");$("#twinMode").classList.add("show");
+}
+function closeTwinMode(){
+  $("#twinOverlay").classList.remove("show");$("#twinMode").classList.remove("show");
+}
+$("#enterTwinBtn").onclick=openTwinMode;
+$("#closeTwin").onclick=closeTwinMode;
+$("#closeTwinBottom").onclick=closeTwinMode;
+$("#twinOverlay").onclick=closeTwinMode;
+$("#resetTwin").onclick=()=>{$("#twinRange").value=0;renderTwinMode()};
+$("#twinRange").oninput=renderTwinMode;
+
+const sims=[
+ ()=>{state.demand+=18;state.capital=Math.min(state.max,state.capital+1);addEvent("<b>수도권 수요</b> +18MWh","RE-OPT")},
+ ()=>{state.bm+=24;addEvent("<b>Black Mass</b> +24t","CARGO")},
+ ()=>{state.curtailment+=92;state.honam=Math.max(0,state.honam-1);addEvent("<b>출력제어</b> +92MWh","RE-OPT")},
+ ()=>{state.seoh=state.seoh==="normal"?"delay":"normal";addEvent(`<b>서화성 노선</b> ${state.seoh==="delay"?"지연":"정상 복귀"}`,state.seoh==="delay"?"DELAY":"NORMAL",state.seoh==="delay")}
+];
+setInterval(()=>{let d=new Date();$("#clock").textContent=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;updateTwinPanel();if(auto&&!frozen){countdown--;$("#countdown").textContent="00:"+String(Math.max(0,countdown)).padStart(2,"0");if(countdown<=0){countdown=8;simIdx=(simIdx+1)%sims.length;sims[simIdx]();state.source="SIMULATED DATA";$("#scenarioCount").textContent=128+simIdx*17;solve();toast()}}},1000);
+
+$$(".plan").forEach(p=>p.onclick=()=>{$$(".plan").forEach(x=>x.classList.remove("active"));p.classList.add("active");if(p.dataset.plan==="profit"){plan.ret=10;plan.bmCars=10;plan.profit="₩19.1M";plan.risk="MEDIUM · 27%";plan.type="PROFIT FIRST"}else if(p.dataset.plan==="stable"){plan.ret=18;plan.bmCars=2;plan.profit="₩17.6M";plan.risk="VERY LOW · 2%";plan.type="STABILITY FIRST"}else{solve();return}render();toast("선택한 운영 성향으로 <b>편성안을 갱신했습니다.</b>")});
+solve();updateTwinPanel();
+</script>
+</body>
+</html>
