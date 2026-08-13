@@ -1,7 +1,0 @@
-pandas
-numpy
-lightgbm
-scikit-learn
-holidays
-matplotlib
-joblib
